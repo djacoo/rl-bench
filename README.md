@@ -1,69 +1,88 @@
 # rl-bench
 
-Academic implementations of three actor-critic algorithms applied to Gymnasium continuous-control tasks.
-First environment: `LunarLanderContinuous-v3` (Box2D).
+Three actor-critic algorithms on Gymnasium continuous-control environments.
 
-| Algorithm | Family                | Reference                                                       |
-| --------- | --------------------- | --------------------------------------------------------------- |
-| SAC       | Model-free            | Haarnoja et al., *Soft Actor-Critic Algorithms* (2018b)         |
-| MBPO      | Model-based, Dyna     | Janner et al., *When to Trust Your Model* (NeurIPS 2019)        |
-| MACURA    | Model-based, Dyna     | Frauenknecht et al., *Trust the Model Where It Trusts Itself* (ICML 2024) |
+| Algorithm | Idea |
+|-----------|------|
+| **SAC**    | Maximum-entropy off-policy actor-critic with twin Q-functions and learned temperature. |
+| **MBPO**   | Dyna with a probabilistic dynamics ensemble; short branched rollouts augment the replay buffer. |
+| **MACURA** | MBPO with a per-step uncertainty gate (GJS divergence) and adaptive rollout length / update count. |
 
-The MACURA paper PDF and the assignment brief are kept under `docs/`.
+## Stack
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A52.4-EE4C2C?logo=pytorch&logoColor=white)
+![Gymnasium](https://img.shields.io/badge/Gymnasium-Box2D-0081A5)
+![uv](https://img.shields.io/badge/uv-package%20mgr-DE5FE9)
+![TensorBoard](https://img.shields.io/badge/TensorBoard-logs-FF6F00?logo=tensorflow&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-tests-0A9EDC?logo=pytest&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Layout
 
 ```
-configs/      # YAML hyperparameters, one per algorithm
-src/rl_bench/ # algorithm + shared primitives (one file per algorithm)
-scripts/      # bash launchers (multi-seed) and plotting
-tests/        # pytest unit + smoke tests
-docs/         # PDFs of paper + assignment (specs and plans are local-only, gitignored)
-runs/         # tensorboard + jsonl per seed (gitignored)
-results/      # aggregated plots (gitignored)
+rl-bench/
+├─ configs/         # one YAML per algorithm
+├─ src/rl_bench/
+│   ├─ envs.py      # gym wrapper + running obs normalizer
+│   ├─ buffer.py    # replay buffer (env + model)
+│   ├─ nets.py      # MLP, GaussianTanhPolicy, QNet, ProbEnsembleMember
+│   ├─ ensemble.py  # probabilistic ensemble + GJS divergence
+│   ├─ exploration.py  # stochastic / white / pink noise
+│   ├─ sac.py       # SAC agent
+│   ├─ train_sac.py
+│   ├─ train_mbpo.py
+│   ├─ train_macura.py
+│   ├─ eval.py
+│   ├─ live_plot.py # interactive learning-curve window
+│   ├─ logger.py    # TB + jsonl + csv
+│   └─ utils.py
+├─ scripts/         # bash launchers + plot_runs.py
+├─ tests/
+├─ runs/            # per-seed artifacts (gitignored)
+└─ results/         # aggregated plots (gitignored)
 ```
 
-## Setup
+## Reproduce
 
-Requires Python 3.11 and [uv](https://docs.astral.sh/uv/).
-
-```
+```bash
+git clone <repo-url> rl-bench && cd rl-bench
 uv sync
 ```
 
-This creates `.venv/` and installs all dependencies (including dev).
-
-## Running
-
 Single seed:
 
-```
+```bash
 uv run python -m rl_bench.train_sac    --config configs/sac.yaml    --seed 0
 uv run python -m rl_bench.train_mbpo   --config configs/mbpo.yaml   --seed 0
 uv run python -m rl_bench.train_macura --config configs/macura.yaml --seed 0
 ```
 
-Multi-seed (bash launcher fans out three seeds):
+Multi-seed (`0 1 2` by default):
 
-```
+```bash
 bash scripts/train_sac.sh
 bash scripts/train_mbpo.sh
 bash scripts/train_macura.sh
 ```
 
-## Plotting
+Each run pops up a pygame window (the env) and a matplotlib window (live reward curve), and prints a tqdm progress bar. Disable for headless / faster training by setting `env.render: false` and `train.live_plot: false` in the YAML.
 
-```
+Aggregate seeds into one figure:
+
+```bash
 uv run python scripts/plot_runs.py --algos sac mbpo macura --out results/learning_curves.png
+```
+
+TensorBoard:
+
+```bash
+uv run tensorboard --logdir runs/
 ```
 
 ## Tests
 
-```
+```bash
 uv run pytest                 # unit tests
-uv run pytest -m slow         # also runs the SAC-on-Pendulum smoke test
+uv run pytest -m slow         # also the 2k-step SAC smoke on Pendulum-v1
 ```
-
-## Branching model
-
-`main` (stable) — `develop` (integration) — `feature/*`, `hotfix/*`, `release/*` per gitflow.
