@@ -44,6 +44,7 @@ train:
   ckpt_every: 25_000
   eval_every: 10_000
   eval_episodes: 30
+  live_plot: true
 
 paths:
   run_dir: "runs/macura_seed{seed}"
