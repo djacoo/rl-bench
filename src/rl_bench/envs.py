@@ -42,11 +42,13 @@ class ObsNormalizer(gym.ObservationWrapper):
         return self.rms.normalize(arr).astype(np.float32)
 
 
-def make_env(env_id, seed, eval=False, max_episode_steps=None, obs_norm=True, shared_rms=None):
+def make_env(env_id, seed, eval=False, max_episode_steps=None, obs_norm=True, shared_rms=None, render_mode=None):
+    kwargs = {}
     if max_episode_steps is not None:
-        env = gym.make(env_id, max_episode_steps=max_episode_steps)
-    else:
-        env = gym.make(env_id)
+        kwargs["max_episode_steps"] = max_episode_steps
+    if render_mode is not None:
+        kwargs["render_mode"] = render_mode
+    env = gym.make(env_id, **kwargs)
     env = gym.wrappers.RecordEpisodeStatistics(env)
     if obs_norm:
         env = ObsNormalizer(env, update_stats=not eval)
