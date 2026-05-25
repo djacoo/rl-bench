@@ -37,6 +37,7 @@ def main():
         seed=seed,
         max_episode_steps=env_cfg.get("max_episode_steps"),
         obs_norm=env_cfg.get("obs_norm", True),
+        render_mode="human" if env_cfg.get("render", False) else None,
     )
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
