@@ -59,3 +59,41 @@ def test_sample_from_shapes():
     s_next, r = ens.sample_from(s, a, chosen, idx_subset)
     assert s_next.shape == (6, 3)
     assert r.shape == (6,)
+
+
+def test_gjs_identical_members_zero():
+    ens = ProbabilisticEnsemble(
+        obs_dim=3, act_dim=2, n_members=3, n_elites=2, hidden=(8, 8), device="cpu"
+    )
+    mu = torch.ones(3, 5, 4)
+    var = torch.ones(3, 5, 4) * 0.5
+    u = ens.gjs_uncertainty(mu, var)
+    assert u.shape == (5,)
+    assert torch.allclose(u, torch.zeros(5), atol=1e-6)
+
+
+def test_gjs_separated_members_positive():
+    ens = ProbabilisticEnsemble(
+        obs_dim=3, act_dim=2, n_members=2, n_elites=1, hidden=(8, 8), device="cpu"
+    )
+    mu = torch.zeros(2, 3, 4)
+    mu[1] = 5.0
+    var = torch.ones(2, 3, 4)
+    u = ens.gjs_uncertainty(mu, var)
+    assert u.shape == (3,)
+    assert (u > 0).all()
+
+
+def test_gjs_two_member_matches_closed_form():
+    # E=2: u_GJS = 0.5*(KL(N0||N_01) + KL(N1||N_01)) averaged over D
+    # With mu=[0,0,0] vs [2,0,0], var=1 everywhere:
+    # mu_01 = [1,0,0], var_01 = 1
+    # KL per dim: 0.5*(0 + (1 + (mu-mu_01)^2)/1 - 1) = 0.5*1 = 0.5 in dim 0, 0 else
+    # D_GJS = 0.5*(0.5 + 0.5) = 0.5 in dim 0; average over 3 dims = 1/6
+    ens = ProbabilisticEnsemble(
+        obs_dim=2, act_dim=1, n_members=2, n_elites=1, hidden=(8, 8), device="cpu"
+    )
+    mu = torch.tensor([[[0.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]])
+    var = torch.tensor([[[1.0, 1.0, 1.0]], [[1.0, 1.0, 1.0]]])
+    u = ens.gjs_uncertainty(mu, var)
+    assert abs(float(u[0]) - 1.0 / 6.0) < 1e-5

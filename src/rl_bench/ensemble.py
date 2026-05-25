@@ -164,3 +164,36 @@ class ProbabilisticEnsemble(nn.Module):
         s_next = s + sample[..., : self.obs_dim]
         r = sample[..., self.obs_dim]
         return s_next, r
+
+    @torch.no_grad()
+    def gjs_uncertainty(self, mu, var, eps=1e-8):
+        """Geometric JS divergence across ensemble members (Frauenknecht 2024 eqs 15-19).
+
+        mu, var: [E, B, D] (diagonal Gaussians).
+        Returns [B]: mean of pairwise D_GJS over e<f pairs, averaged across D dims.
+        """
+        E, B, D = mu.shape
+        var = var.clamp_min(eps)
+        mu_e = mu.unsqueeze(1)  # [E, 1, B, D]
+        mu_f = mu.unsqueeze(0)  # [1, E, B, D]
+        var_e = var.unsqueeze(1)
+        var_f = var.unsqueeze(0)
+        inv_e = 1.0 / var_e
+        inv_f = 1.0 / var_f
+        var_ef = 1.0 / (0.5 * inv_e + 0.5 * inv_f)
+        mu_ef = var_ef * (0.5 * inv_e * mu_e + 0.5 * inv_f * mu_f)
+
+        def kl(mu_a, var_a, mu_b, var_b):
+            return 0.5 * (
+                torch.log(var_b / var_a) + (var_a + (mu_a - mu_b) ** 2) / var_b - 1.0
+            )
+
+        d_gjs = 0.5 * (
+            kl(mu_e, var_e, mu_ef, var_ef) + kl(mu_f, var_f, mu_ef, var_ef)
+        )
+        d_gjs = d_gjs.sum(dim=-1) / D  # average over output dims
+        mask = torch.triu(
+            torch.ones(E, E, device=mu.device, dtype=torch.bool), diagonal=1
+        )
+        pairs = d_gjs[mask]  # [n_pairs, B]
+        return pairs.mean(dim=0)
