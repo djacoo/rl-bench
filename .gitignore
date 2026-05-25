@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# uv / venv
+.venv/
+.python-version
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Run artifacts
+runs/
+results/
+
+# Local docs (specs and plans are working artifacts, not source-of-truth)
+docs/specs/
+docs/plans/
+
+# Logs
+*.log

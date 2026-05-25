@@ -1,0 +1,49 @@
+algo: macura
+seed: 0
+device: auto
+
+env:
+  env_id: "LunarLanderContinuous-v3"
+  max_episode_steps: 1000
+  obs_norm: true
+  eval_seed: 10000
+
+sac:
+  gamma: 0.99
+  tau: 0.005
+  lr_actor: 3.0e-4
+  lr_critic: 3.0e-4
+  lr_alpha: 3.0e-4
+  batch_size: 256
+  replay_capacity: 200_000
+  warmup_steps: 5_000
+  hidden: [256, 256]
+
+model:
+  n_members: 7
+  n_elites: 5
+  hidden: [200, 200, 200, 200]
+  refit_every: 250
+  max_refit_samples: 40_000
+  holdout_frac: 0.2
+  rollout_M: 400              # parallel branched rollouts (paper: M)
+  real_ratio: 0.10
+  model_buf_capacity: 50_000
+  T_max: 10                   # max rollout length (paper default)
+  zeta: 0.95                  # quantile for base uncertainty (paper default)
+  xi: 2.0                     # uncertainty scaling factor (tune in [1, 5])
+  G_max: 8                    # max SAC updates per env step (adapted via eq 22)
+
+exploration:
+  kind: pink                  # paper recommends pink noise for MACURA
+  scale: 0.05
+
+train:
+  total_env_steps: 200_000
+  log_every: 1_000
+  ckpt_every: 25_000
+  eval_every: 10_000
+  eval_episodes: 30
+
+paths:
+  run_dir: "runs/macura_seed{seed}"

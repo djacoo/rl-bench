@@ -1,0 +1,35 @@
+algo: sac
+seed: 0
+device: auto
+
+env:
+  env_id: "LunarLanderContinuous-v3"
+  max_episode_steps: 1000
+  obs_norm: true
+  eval_seed: 10000
+
+sac:
+  gamma: 0.99
+  tau: 0.005
+  lr_actor: 3.0e-4
+  lr_critic: 3.0e-4
+  lr_alpha: 3.0e-4
+  batch_size: 256
+  replay_capacity: 1_000_000
+  warmup_steps: 1000
+  hidden: [256, 256]
+
+exploration:
+  kind: stochastic     # stochastic | white | pink | deterministic
+  scale: 0.0           # ignored when kind=stochastic
+
+train:
+  total_env_steps: 200_000
+  updates_per_step: 1
+  log_every: 1_000
+  ckpt_every: 25_000
+  eval_every: 10_000
+  eval_episodes: 30
+
+paths:
+  run_dir: "runs/sac_seed{seed}"

@@ -1,0 +1,39 @@
+[project]
+name = "rl-bench"
+version = "0.0.1"
+description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium continuous-control environments (LunarLanderContinuous-v3 first)."
+readme = "README.md"
+requires-python = "==3.11.*"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Jacopo Parretti" },
+]
+dependencies = [
+    "torch>=2.4",
+    "numpy>=1.26,<2.0",
+    "gymnasium[box2d]>=0.29",
+    "tqdm>=4.66",
+    "pyyaml>=6.0",
+    "tensorboard>=2.14",
+    "colorednoise>=2.2",
+    "matplotlib>=3.8",
+    "pandas>=2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rl_bench"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: longer smoke tests (skip with -m 'not slow')",
+]
