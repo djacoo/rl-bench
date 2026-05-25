@@ -4,12 +4,14 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from .buffer import ReplayBuffer
 from .ensemble import ProbabilisticEnsemble
 from .envs import make_env
 from .eval import evaluate
 from .exploration import make_noise
+from .live_plot import LivePlot
 from .logger import Logger
 from .sac import SACAgent
 from .utils import dump_config, load_yaml, resolve_device, set_seed
@@ -95,13 +97,18 @@ def main():
     kappa_sum = 0.0
     kappa = float("inf")
 
+    live = bool(train_cfg.get("live_plot", True))
+    lp = LivePlot(title=f"macura seed={seed}") if live else None
+
     obs, _ = env.reset(seed=seed)
     ep_ret = 0.0
     ep_len_acc = 0
     t0 = time.time()
     last_losses = {}
+    last_ep_ret = float("nan")
 
-    for t in range(total):
+    pbar = tqdm(range(total), desc=f"macura seed={seed}", dynamic_ncols=True, mininterval=0.5)
+    for t in pbar:
         if t < warmup:
             a = env.action_space.sample().astype(np.float32)
         else:
@@ -117,6 +124,9 @@ def main():
         if term or trunc:
             logger.log_scalar("train/ep_return", ep_ret, t)
             logger.log_scalar("train/ep_len", ep_len_acc, t)
+            if lp is not None:
+                lp.add_train(t, ep_ret)
+            last_ep_ret = ep_ret
             ep_ret = 0.0
             ep_len_acc = 0
             obs, _ = env.reset()
@@ -186,8 +196,9 @@ def main():
                     last_losses = agent.update(mixed)
 
         step1 = t + 1
+        sps = step1 / (time.time() - t0)
+        pbar.set_postfix(ep_ret=f"{last_ep_ret:.1f}", sps=f"{sps:.0f}", refresh=False)
         if step1 % log_every == 0 and last_losses:
-            sps = step1 / (time.time() - t0)
             logger.log_dict(
                 {
                     **last_losses,
@@ -204,9 +215,14 @@ def main():
                 eval_seed=env_cfg["eval_seed"], deterministic=True,
             )
             logger.log_eval(step1, rets)
+            if lp is not None:
+                lp.add_eval(step1, float(np.mean(rets)))
         if step1 % ckpt_every == 0:
             agent.save(run_dir / f"ckpt_{step1}.pt")
 
+    pbar.close()
+    if lp is not None:
+        lp.close()
     logger.close()
 
 
