@@ -12,7 +12,7 @@ from .exploration import make_noise
 from .live_plot import LivePlot
 from .logger import Logger
 from .sac import SACAgent
-from .utils import dump_config, load_yaml, resolve_device, set_seed
+from .utils import dump_config, load_yaml, prompt_device, resolve_device, set_seed
 
 
 def main():
@@ -26,7 +26,9 @@ def main():
         cfg["seed"] = args.seed
     seed = cfg["seed"]
     set_seed(seed)
-    device = resolve_device(cfg.get("device", "auto"))
+    device_spec = prompt_device(cfg.get("device", "auto"))
+    device = resolve_device(device_spec)
+    cfg["device"] = str(device)
     run_dir = Path(cfg["paths"]["run_dir"].format(seed=seed))
     run_dir.mkdir(parents=True, exist_ok=True)
     dump_config(cfg, run_dir)
