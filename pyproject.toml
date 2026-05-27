@@ -1,7 +1,7 @@
 [project]
 name = "rl-bench"
 version = "0.0.1"
-description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium continuous-control environments (LunarLanderContinuous-v3 first)."
+description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium MuJoCo continuous-control environments (Hopper-v4 first)."
 readme = "README.md"
 requires-python = "==3.11.*"
 license = { file = "LICENSE" }
@@ -11,7 +11,7 @@ authors = [
 dependencies = [
     "torch>=2.4",
     "numpy>=1.26,<2.0",
-    "gymnasium[box2d]>=0.29",
+    "gymnasium[mujoco,box2d]>=0.29",
     "tqdm>=4.66",
     "pyyaml>=6.0",
     "tensorboard>=2.14",

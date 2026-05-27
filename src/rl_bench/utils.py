@@ -24,6 +24,16 @@ def resolve_device(spec: str = "auto") -> torch.device:
     return torch.device("cpu")
 
 
+def setup_device(spec: str = "auto") -> torch.device:
+    device = resolve_device(spec)
+    extra = ""
+    if device.type == "cuda" and torch.cuda.is_available():
+        idx = device.index if device.index is not None else torch.cuda.current_device()
+        extra = f" ({torch.cuda.get_device_name(idx)})"
+    print(f"Using device: {device}{extra} (config: {spec!r})")
+    return device
+
+
 def load_yaml(path) -> dict:
     with open(path) as f:
         return yaml.safe_load(f)

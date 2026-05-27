@@ -1,6 +1,6 @@
 # rl-bench
 
-Three actor-critic algorithms on Gymnasium continuous-control environments.
+Three actor-critic algorithms on Gymnasium MuJoCo continuous-control environments.
 
 | Algorithm | Idea |
 |-----------|------|
@@ -12,7 +12,7 @@ Three actor-critic algorithms on Gymnasium continuous-control environments.
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A52.4-EE4C2C?logo=pytorch&logoColor=white)
-![Gymnasium](https://img.shields.io/badge/Gymnasium-Box2D-0081A5)
+![Gymnasium](https://img.shields.io/badge/Gymnasium-MuJoCo-0081A5)
 ![uv](https://img.shields.io/badge/uv-package%20mgr-DE5FE9)
 ![TensorBoard](https://img.shields.io/badge/TensorBoard-logs-FF6F00?logo=tensorflow&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-tests-0A9EDC?logo=pytest&logoColor=white)
@@ -66,7 +66,7 @@ bash scripts/train_mbpo.sh
 bash scripts/train_macura.sh
 ```
 
-Each run pops up a pygame window (the env) and a matplotlib window (live reward curve), and prints a tqdm progress bar. Disable for headless / faster training by setting `env.render: false` and `train.live_plot: false` in the YAML.
+Default configs now target `Hopper-v4` (MuJoCo). Runs are headless by default (`env.render: false`, `train.live_plot: false`). Enable rendering/live curves in YAML only when needed.
 
 Aggregate seeds into one figure:
 

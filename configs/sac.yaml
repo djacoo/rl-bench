@@ -3,11 +3,11 @@ seed: 0
 device: cpu
 
 env:
-  env_id: "LunarLanderContinuous-v3"
+  env_id: "Hopper-v4"
   max_episode_steps: 1000
   obs_norm: false
   eval_seed: 10000
-  render: false           # pygame window of train env; set false for headless / faster runs
+  render: false           # render train env window; keep false for headless / faster runs
 
 sac:
   gamma: 0.99

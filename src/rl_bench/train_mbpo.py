@@ -14,7 +14,7 @@ from .exploration import make_noise
 from .live_plot import LivePlot
 from .logger import Logger
 from .sac import SACAgent
-from .utils import dump_config, load_yaml, resolve_device, set_seed
+from .utils import dump_config, load_yaml, set_seed, setup_device
 
 
 # Note: rollouts use done=False. With rollout_horizon=1 (MBPO default) this bias
@@ -32,7 +32,7 @@ def main():
         cfg["seed"] = args.seed
     seed = cfg["seed"]
     set_seed(seed)
-    device = resolve_device(cfg.get("device", "auto"))
+    device = setup_device(cfg.get("device", "auto"))
     run_dir = Path(cfg["paths"]["run_dir"].format(seed=seed))
     run_dir.mkdir(parents=True, exist_ok=True)
     dump_config(cfg, run_dir)

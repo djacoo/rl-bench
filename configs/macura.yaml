@@ -3,11 +3,11 @@ seed: 0
 device: auto
 
 env:
-  env_id: "LunarLanderContinuous-v3"
+  env_id: "Hopper-v4"
   max_episode_steps: 1000
-  obs_norm: true
+  obs_norm: false
   eval_seed: 10000
-  render: true            # pygame window of train env; set false for headless / faster runs
+  render: false           # render train env window; keep false for headless / faster runs
 
 sac:
   gamma: 0.99
@@ -15,9 +15,9 @@ sac:
   lr_actor: 3.0e-4
   lr_critic: 3.0e-4
   lr_alpha: 3.0e-4
-  batch_size: 256
+  batch_size: 128
   replay_capacity: 200_000
-  warmup_steps: 5_000
+  warmup_steps: 10_000
   hidden: [256, 256]
 
 model:
@@ -40,12 +40,12 @@ exploration:
   scale: 0.05
 
 train:
-  total_env_steps: 200_000
+  total_env_steps: 500_000
   log_every: 1_000
   ckpt_every: 25_000
   eval_every: 10_000
   eval_episodes: 30
-  live_plot: true
+  live_plot: false
 
 paths:
   run_dir: "runs/macura_seed{seed}"
