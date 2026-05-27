@@ -24,6 +24,24 @@ def resolve_device(spec: str = "auto") -> torch.device:
     return torch.device("cpu")
 
 
+def prompt_yes_no(question: str, default: bool = True) -> bool:
+    """Y/N prompt. Skips if non-tty (returns default)."""
+    import sys
+
+    if not sys.stdin.isatty():
+        return default
+    suffix = "[Y/n]" if default else "[y/N]"
+    while True:
+        raw = input(f"{question} {suffix}: ").strip().lower()
+        if not raw:
+            return default
+        if raw in ("y", "yes"):
+            return True
+        if raw in ("n", "no"):
+            return False
+        print("Pick y or n.")
+
+
 def prompt_device(cfg_device: str = "auto") -> str:
     """Interactive device picker. Skips prompt if non-tty (CI, piped, bash subshell)."""
     import sys
