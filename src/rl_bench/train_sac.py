@@ -12,7 +12,14 @@ from .exploration import make_noise
 from .live_plot import LivePlot
 from .logger import Logger
 from .sac import SACAgent
-from .utils import dump_config, load_yaml, prompt_device, resolve_device, set_seed
+from .utils import (
+    dump_config,
+    load_yaml,
+    prompt_device,
+    prompt_yes_no,
+    resolve_device,
+    set_seed,
+)
 
 
 def main():
@@ -29,6 +36,12 @@ def main():
     device_spec = prompt_device(cfg.get("device", "auto"))
     device = resolve_device(device_spec)
     cfg["device"] = str(device)
+    cfg["train"]["live_plot"] = prompt_yes_no(
+        "Live reward graph?", cfg["train"].get("live_plot", True)
+    )
+    cfg["env"]["render"] = prompt_yes_no(
+        "Live game viewer?", cfg["env"].get("render", True)
+    )
     run_dir = Path(cfg["paths"]["run_dir"].format(seed=seed))
     run_dir.mkdir(parents=True, exist_ok=True)
     dump_config(cfg, run_dir)
