@@ -33,7 +33,7 @@ model:
   T_max: 10                   # max rollout length (paper default)
   zeta: 0.95                  # quantile for base uncertainty (paper default)
   xi: 2.0                     # uncertainty scaling factor (tune in [1, 5])
-  G_max: 8                    # max SAC updates per env step (adapted via eq 22)
+  G_max: 16                   # max SAC updates per env step (adapted via eq 22)
 
 exploration:
   kind: pink                  # paper recommends pink noise for MACURA
