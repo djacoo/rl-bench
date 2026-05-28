@@ -43,10 +43,12 @@ def main():
     device = resolve_device(device_spec)
     cfg["device"] = str(device)
     cfg["train"]["live_plot"] = prompt_yes_no(
-        "Live reward graph?", cfg["train"].get("live_plot", True)
+        "Live reward graph?", cfg["train"].get("live_plot", True),
+        env_var="RL_BENCH_LIVE_PLOT",
     )
     cfg["env"]["render"] = prompt_yes_no(
-        "Live game viewer?", cfg["env"].get("render", True)
+        "Live game viewer?", cfg["env"].get("render", True),
+        env_var="RL_BENCH_RENDER",
     )
     run_dir = Path(cfg["paths"]["run_dir"].format(seed=seed))
     run_dir.mkdir(parents=True, exist_ok=True)
