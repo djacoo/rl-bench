@@ -24,10 +24,13 @@ def resolve_device(spec: str = "auto") -> torch.device:
     return torch.device("cpu")
 
 
-def prompt_yes_no(question: str, default: bool = True) -> bool:
-    """Y/N prompt. Skips if non-tty (returns default)."""
+def prompt_yes_no(question: str, default: bool = True, env_var: str | None = None) -> bool:
+    """Y/N prompt. Honors env_var if set; skips if non-tty (returns default)."""
+    import os
     import sys
 
+    if env_var and env_var in os.environ:
+        return os.environ[env_var].strip().lower() in ("1", "true", "yes", "y")
     if not sys.stdin.isatty():
         return default
     suffix = "[Y/n]" if default else "[y/N]"
@@ -42,10 +45,13 @@ def prompt_yes_no(question: str, default: bool = True) -> bool:
         print("Pick y or n.")
 
 
-def prompt_device(cfg_device: str = "auto") -> str:
-    """Interactive device picker. Skips prompt if non-tty (CI, piped, bash subshell)."""
+def prompt_device(cfg_device: str = "auto", env_var: str = "RL_BENCH_DEVICE") -> str:
+    """Interactive device picker. Honors env_var; skips if non-tty (CI, piped, bash subshell)."""
+    import os
     import sys
 
+    if env_var and env_var in os.environ:
+        return os.environ[env_var]
     if not sys.stdin.isatty():
         return cfg_device
     options = ["cpu"]
