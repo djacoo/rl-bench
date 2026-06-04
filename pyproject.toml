@@ -1,7 +1,7 @@
 [project]
 name = "rl-bench"
 version = "0.0.1"
-description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium continuous-control environments (LunarLanderContinuous-v3 first)."
+description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium MuJoCo continuous-control environments (Hopper-v4 first)."
 readme = "README.md"
 requires-python = "==3.11.*"
 license = { file = "LICENSE" }
@@ -11,18 +11,20 @@ authors = [
 dependencies = [
     "torch>=2.4",
     "numpy>=1.26,<2.0",
-    "gymnasium[box2d,mujoco]>=0.29",
+    "gymnasium[mujoco]>=0.29",
     "tqdm>=4.66",
     "pyyaml>=6.0",
     "tensorboard>=2.14",
     "colorednoise>=2.2",
     "matplotlib>=3.8",
     "pandas>=2.2",
-]
-
-[dependency-groups]
-dev = [
-    "pytest>=8.0",
+    "imageio[ffmpeg]>=2.34",
+    "omegaconf>=2.3",
+    "hydra-core>=1.3",
+    "wandb>=0.16",
+    "termcolor>=2.4",
+    "opencv-python-headless>=4.8",
+    "scipy>=1.11",
 ]
 
 [build-system]
@@ -31,9 +33,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rl_bench"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = [
-    "slow: longer smoke tests (skip with -m 'not slow')",
-]

@@ -24,59 +24,14 @@ def resolve_device(spec: str = "auto") -> torch.device:
     return torch.device("cpu")
 
 
-def prompt_yes_no(question: str, default: bool = True, env_var: str | None = None) -> bool:
-    """Y/N prompt. Honors env_var if set; skips if non-tty (returns default)."""
-    import os
-    import sys
-
-    if env_var and env_var in os.environ:
-        return os.environ[env_var].strip().lower() in ("1", "true", "yes", "y")
-    if not sys.stdin.isatty():
-        return default
-    suffix = "[Y/n]" if default else "[y/N]"
-    while True:
-        raw = input(f"{question} {suffix}: ").strip().lower()
-        if not raw:
-            return default
-        if raw in ("y", "yes"):
-            return True
-        if raw in ("n", "no"):
-            return False
-        print("Pick y or n.")
-
-
-def prompt_device(cfg_device: str = "auto", env_var: str = "RL_BENCH_DEVICE") -> str:
-    """Interactive device picker. Honors env_var; skips if non-tty (CI, piped, bash subshell)."""
-    import os
-    import sys
-
-    if env_var and env_var in os.environ:
-        return os.environ[env_var]
-    if not sys.stdin.isatty():
-        return cfg_device
-    options = ["cpu"]
-    if torch.backends.mps.is_available():
-        options.append("mps")
-    if torch.cuda.is_available():
-        options.append("cuda")
-    if len(options) == 1:
-        return options[0]
-    default_idx = options.index(cfg_device) if cfg_device in options else 0
-    print("\nDevice:")
-    for i, opt in enumerate(options):
-        marker = " (default)" if i == default_idx else ""
-        print(f"  [{i}] {opt}{marker}")
-    while True:
-        choice = input(f"Pick [0-{len(options) - 1}], Enter for default: ").strip()
-        if not choice:
-            return options[default_idx]
-        try:
-            idx = int(choice)
-            if 0 <= idx < len(options):
-                return options[idx]
-        except ValueError:
-            pass
-        print(f"Invalid. Pick 0-{len(options) - 1}.")
+def setup_device(spec: str = "auto") -> torch.device:
+    device = resolve_device(spec)
+    extra = ""
+    if device.type == "cuda" and torch.cuda.is_available():
+        idx = device.index if device.index is not None else torch.cuda.current_device()
+        extra = f" ({torch.cuda.get_device_name(idx)})"
+    print(f"Using device: {device}{extra} (config: {spec!r})")
+    return device
 
 
 def load_yaml(path) -> dict:
