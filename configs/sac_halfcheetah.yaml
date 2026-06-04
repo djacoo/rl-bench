@@ -13,8 +13,6 @@ sac:
   gamma: 0.99
   tau: 0.005
   lr_actor: 3.0e-4
-  lr_critic: 3.0e-4
-  lr_alpha: 3.0e-4
   batch_size: 128
   replay_capacity: 1_000_000
   warmup_steps: 5_000

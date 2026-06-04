@@ -93,8 +93,8 @@ Each file is a single experiment recipe. Shared top-level sections:
 | `algo` | `sac`, `mbpo`, or `macura` — selects bridge algorithm block and trainer. |
 | `seed` / `device` | RNG seed; `device: auto` or `cpu` / `cuda` / `mps`. |
 | `env` | `env_id` (e.g. `Hopper-v4`), `max_episode_steps`, `obs_norm`, `eval_seed`, `render` (train window; usually `false`). |
-| `sac` | Replay capacity, warmup, batch, learning rates, `hidden` (actor/critic width for bridge), γ, τ. |
-| `model` | **MBPO/MACURA only:** ensemble size/elites, MLP width, `refit_every`, `rollout_M`, `real_ratio`, `updates_G` / `G_max`, MACURA `xi` / `zeta` / `T_max`. |
+| `sac` | Replay capacity, warmup, batch, `lr_actor`, `hidden` (actor/critic width for bridge), γ, τ. |
+| `model` | **MBPO/MACURA only:** `n_members`, MLP width, `refit_every`, `rollout_M`, `real_ratio`, `updates_G` / `G_max`, MACURA `xi` / `zeta` / `T_max`. |
 | `exploration` | `kind` + `scale` (see `exploration.py` / bridge mapping). |
 | `train` | `total_env_steps`, `eval_every`, `eval_episodes`, `log_every`, `ckpt_every` (SAC), optional `video_every` / `video_episodes`. |
 | `paths.run_dir` | Output directory template, e.g. `runs/mbpo_seed{seed}`. |
