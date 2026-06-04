@@ -36,7 +36,7 @@ flowchart LR
 1. **`scripts/sync_macura_upstream.sh`** clones the paper repo into `vendor/macura-upstream/` (gitignored).
 2. **`upstream_path.ensure_upstream()`** prepends that directory to `sys.path` so `import mbrl` works.
 3. **`cfg_bridge.build_mbrl_cfg()`** turns your flat YAML into the nested OmegaConf structure `mbrl.algorithms.*.train()` expects.
-4. **`upstream_env.make_train_envs()`** builds Gymnasium train / eval / MACURA-distance envs with optional observation normalization.
+4. **Env creation** splits by trainer: MBPO/MACURA use **`upstream_env.make_upstream_envs()`** (raw `TimeLimit(MujocoEnv)` envs upstream can freeze/restore; upstream owns normalization), while SAC uses **`envs.make_sac_envs()`** (our `RecordEpisodeStatistics` + optional `ObsNormalizer`).
 5. **Trainers** either call upstream training (MBPO, MACURA) or run a thin SAC loop (SAC only) that still uses upstream’s `pytorch_sac_pranz24` and replay buffer.
 6. **Artifacts** land under `paths.run_dir` (default `runs/<algo>_seed{N}/`).
 
@@ -51,9 +51,9 @@ flowchart LR
 | [`scripts/sync_macura_upstream.sh`](scripts/sync_macura_upstream.sh) | Shallow-clones or updates `vendor/macura-upstream` from GitHub (`MACURA_UPSTREAM_REF`, default `master`). Required before any training. |
 | [`src/rl_bench/upstream_path.py`](src/rl_bench/upstream_path.py) | Resolves `vendor/macura-upstream` relative to the repo root and inserts it at the front of `sys.path`. Raises a clear error if the vendor tree is missing. |
 | [`src/rl_bench/cfg_bridge.py`](src/rl_bench/cfg_bridge.py) | **Config translator.** Maps rl-bench YAML keys (`sac`, `model`, `train`, `env`, `exploration`) into `mbrl`’s `algorithm`, `overrides`, and `dynamics_model` blocks. Important behaviors: maps `env_id` → upstream `env` string and `term_fn` (e.g. HalfCheetah → `no_termination`); adjusts `refit_every` so `rollout_M × refit_every` is divisible by `n_members` (upstream batching constraint); sets MACURA-only fields (`xi`, `zeta`, `max_rollout_length`). Does **not** use the paper’s Hydra override YAMLs—you keep full control via `configs/*.yaml`. |
-| [`src/rl_bench/upstream_env.py`](src/rl_bench/upstream_env.py) | Builds three envs from one config: **train** (updates obs stats if `obs_norm`), **test** (eval, frozen stats), **distance** (second eval env for MACURA’s divergence env). Resolves `get_term_fn()` from `mbrl.env.termination_fns` using the name from the bridge. |
+| [`src/rl_bench/upstream_env.py`](src/rl_bench/upstream_env.py) | `make_upstream_envs()` for MBPO/MACURA: builds raw `TimeLimit(MujocoEnv)` envs (train + `n_eval` eval/distance) in the exact shape upstream's MuJoCo state save/restore expects, and resolves `term_fn` from `mbrl.env.termination_fns`. No obs wrappers — upstream handles normalization via `cfg.algorithm.normalize`. |
 | [`src/rl_bench/upstream_agent.py`](src/rl_bench/upstream_agent.py) | Loads `sac.pth` after MBPO/MACURA runs: reconstructs upstream `SAC` + `SACAgent`, wraps with `UpstreamSacAdapter.act()` for eval/video code that expects a simple policy interface. |
-| [`src/rl_bench/upstream_video.py`](src/rl_bench/upstream_video.py) | Post-training hook for MBPO/MACURA: if `train.video_every` is set and `sac.pth` exists, records MP4s at scheduled steps via `video.record_policy_video()`. |
+| [`src/rl_bench/upstream_video.py`](src/rl_bench/upstream_video.py) | Post-training hook for MBPO/MACURA: if `train.video_every` is set and `sac.pth` exists, reloads it and records **one** final-policy MP4 (raw obs) via `video.record_policy_video()`. |
 
 ### Training entrypoints
 
@@ -67,10 +67,10 @@ flowchart LR
 
 | File | Role |
 |------|------|
-| [`src/rl_bench/envs.py`](src/rl_bench/envs.py) | `make_env()`: `gym.make` + `RecordEpisodeStatistics` + optional `ObsNormalizer` (`RunningMeanStd`). Eval envs can share the train env’s RMS stats so normalization is consistent at test time. |
+| [`src/rl_bench/envs.py`](src/rl_bench/envs.py) | `make_env()`: `gym.make` + `RecordEpisodeStatistics` + optional `ObsNormalizer` (`RunningMeanStd`); eval envs share the train env’s RMS stats. `make_sac_envs()` builds the SAC train+eval pair. **SAC only** — MBPO/MACURA use `upstream_env.py`. |
 | [`src/rl_bench/exploration.py`](src/rl_bench/exploration.py) | Action-space noise for **SAC training only**: `stochastic` / `deterministic` (no extra noise), `white`, or `pink` (1/f, per-episode buffer). MBPO/MACURA exploration type is passed through the bridge as upstream `exploration_type_env`. |
 | [`src/rl_bench/eval.py`](src/rl_bench/eval.py) | Runs `n_episodes` with fixed eval seeds (`eval_seed + i`), deterministic `agent.act()`, returns mean/std/list of returns. Used by `train_sac.py`. |
-| [`src/rl_bench/logger.py`](src/rl_bench/logger.py) | Per-run logging: TensorBoard under `tb/`, append-only `metrics.jsonl`, and `eval.csv` with columns `step, mean, std, min, max`. |
+| [`src/rl_bench/logger.py`](src/rl_bench/logger.py) | Per-run logging (SAC): TensorBoard under `tb/` and `eval.csv` with columns `step, mean, std, min, max`. |
 | [`src/rl_bench/video.py`](src/rl_bench/video.py) | `should_record_video(step, total, video_every)` — true on multiples of `video_every` and on the final step. `record_policy_video()` builds a fresh `rgb_array` env, rolls out the policy, writes H.264 MP4 with imageio (no MoviePy). |
 | [`src/rl_bench/utils.py`](src/rl_bench/utils.py) | `set_seed`, `resolve_device` / `setup_device` (`auto` → CUDA → MPS → CPU), `load_yaml`, `dump_config` (copies resolved YAML into the run dir). |
 
@@ -124,8 +124,7 @@ After training, `runs/<name>_seed<N>/` typically includes:
 |----------|-------------|
 | `config.yaml` | Copy of the YAML used (`dump_config`) |
 | `eval.csv` | SAC trainer eval rollouts; upstream may also write eval logs for MBPO/MACURA |
-| `metrics.jsonl` | SAC scalar logs (when used) |
-| `tb/` | TensorBoard event files |
+| `tb/` | TensorBoard event files (SAC) |
 | `sac.pth` | Final SAC weights (all algorithms save this name upstream) |
 | `ckpt_*.pt` | SAC periodic checkpoints |
 | `videos/step_*.mp4` | Optional policy rollouts |

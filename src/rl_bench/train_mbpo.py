@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from .cfg_bridge import build_mbrl_cfg
-from .upstream_env import get_term_fn, make_train_envs
+from .upstream_env import make_upstream_envs
 from .upstream_path import ensure_upstream
 from .upstream_video import maybe_record_upstream_videos
 from .utils import dump_config, load_yaml, set_seed, setup_device
@@ -29,15 +29,12 @@ def main():
     import mbrl.algorithms.mbpo as mbpo
 
     mbrl_cfg = build_mbrl_cfg(yaml_cfg)
-    env, test_env, _, shared_rms = make_train_envs(yaml_cfg, seed)
-    term_fn = get_term_fn(mbrl_cfg)
+    env, term_fn, (test_env,) = make_upstream_envs(mbrl_cfg, n_eval=1)
 
     print(f"Using device: {mbrl_cfg.device}")
     mbpo.train(env, test_env, term_fn, mbrl_cfg, work_dir=str(run_dir))
 
-    maybe_record_upstream_videos(
-        run_dir, test_env, yaml_cfg["env"], mbrl_cfg, yaml_cfg, shared_rms
-    )
+    maybe_record_upstream_videos(run_dir, test_env, yaml_cfg["env"], mbrl_cfg, yaml_cfg)
 
 
 if __name__ == "__main__":

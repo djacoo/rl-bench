@@ -1,5 +1,4 @@
 import csv
-import json
 from pathlib import Path
 
 import numpy as np
@@ -11,7 +10,6 @@ class Logger:
         self.run_dir = Path(run_dir)
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.tb = SummaryWriter(self.run_dir / "tb")
-        self.jsonl = open(self.run_dir / "metrics.jsonl", "a")
         eval_path = self.run_dir / "eval.csv"
         new_eval = not eval_path.exists()
         self.eval_f = open(eval_path, "a", newline="")
@@ -19,16 +17,6 @@ class Logger:
         if new_eval:
             self.eval_w.writerow(["step", "mean", "std", "min", "max"])
             self.eval_f.flush()
-
-    def log_scalar(self, key, val, step):
-        self.tb.add_scalar(key, float(val), step)
-
-    def log_dict(self, d, step):
-        for k, v in d.items():
-            self.log_scalar(k, v, step)
-        rec = {"step": int(step), **{k: float(v) for k, v in d.items()}}
-        self.jsonl.write(json.dumps(rec) + "\n")
-        self.jsonl.flush()
 
     def log_eval(self, step, returns):
         m = float(np.mean(returns))
@@ -42,5 +30,4 @@ class Logger:
 
     def close(self):
         self.tb.close()
-        self.jsonl.close()
         self.eval_f.close()

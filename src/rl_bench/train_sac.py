@@ -6,10 +6,10 @@ import numpy as np
 from tqdm import tqdm
 
 from .cfg_bridge import build_mbrl_cfg
+from .envs import make_sac_envs
 from .eval import evaluate
 from .exploration import make_noise
 from .upstream_agent import UpstreamSacAdapter
-from .upstream_env import make_train_envs
 from .upstream_path import ensure_upstream
 from .video import record_policy_video, should_record_video
 from .logger import Logger
@@ -40,7 +40,7 @@ def main():
     from mbrl.util.replay_buffer import ReplayBuffer as MbrlReplayBuffer
 
     mbrl_cfg = build_mbrl_cfg(yaml_cfg)
-    env, eval_env, _, shared_rms = make_train_envs(yaml_cfg, seed)
+    env, eval_env, shared_rms = make_sac_envs(yaml_cfg, seed)
     mbrl.planning.complete_agent_cfg(env, mbrl_cfg.algorithm.agent)
     sac = pytorch_sac.SAC(
         mbrl_cfg.algorithm.agent.num_inputs,
