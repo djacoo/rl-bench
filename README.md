@@ -15,7 +15,6 @@ Three actor-critic algorithms on Gymnasium MuJoCo continuous-control environment
 ![Gymnasium](https://img.shields.io/badge/Gymnasium-MuJoCo-0081A5)
 ![uv](https://img.shields.io/badge/uv-package%20mgr-DE5FE9)
 ![TensorBoard](https://img.shields.io/badge/TensorBoard-logs-FF6F00?logo=tensorflow&logoColor=white)
-![pytest](https://img.shields.io/badge/pytest-tests-0A9EDC?logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Upstream MACURA code
@@ -27,8 +26,6 @@ bash scripts/sync_macura_upstream.sh   # → vendor/macura-upstream/ (gitignored
 ```
 
 [`cfg_bridge.py`](src/rl_bench/cfg_bridge.py) maps this repo’s flat YAML configs to upstream OmegaConf (your hyperparameters, not the paper’s default Hydra overrides). [`upstream_path.py`](src/rl_bench/upstream_path.py) adds the clone to `sys.path` at import time.
-
-Legacy in-repo [`ensemble.py`](src/rl_bench/ensemble.py) / [`sac.py`](src/rl_bench/sac.py) remain for unit tests only; trainers do not use them.
 
 ## Layout
 
@@ -44,10 +41,8 @@ rl-bench/
 ├─ src/rl_bench/
 │   ├─ cfg_bridge.py, upstream_*.py
 │   ├─ envs.py, buffer.py, exploration.py, eval.py, logger.py, video.py
-│   ├─ train_sac.py, train_mbpo.py, train_macura.py
-│   └─ ensemble.py, sac.py   # legacy; tests only
+│   └─ train_sac.py, train_mbpo.py, train_macura.py
 ├─ vendor/macura-upstream/  # after sync; gitignored
-├─ tests/
 ├─ runs/                 # per-seed checkpoints/logs (gitignored)
 └─ results/              # aggregated summaries / plots
 ```
@@ -98,11 +93,4 @@ TensorBoard:
 
 ```bash
 uv run tensorboard --logdir runs/
-```
-
-## Tests
-
-```bash
-uv run pytest
-uv run pytest -m slow    # 2k-step SAC on Pendulum-v1
 ```
