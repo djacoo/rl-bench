@@ -46,6 +46,8 @@ train:
   eval_every: 10_000
   eval_episodes: 30
   live_plot: false
+  video_every: 100_000
+  video_episodes: 1
 
 paths:
   run_dir: "runs/macura_seed{seed}"

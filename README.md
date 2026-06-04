@@ -18,29 +18,38 @@ Three actor-critic algorithms on Gymnasium MuJoCo continuous-control environment
 ![pytest](https://img.shields.io/badge/pytest-tests-0A9EDC?logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+## Upstream MACURA code
+
+MBPO, MACURA, and SAC training call into the reference [`mbrl`](https://github.com/Data-Science-in-Mechanical-Engineering/macura) package from the paper repo. It is **not** vendored in git; clone it locally:
+
+```bash
+bash scripts/sync_macura_upstream.sh   # → vendor/macura-upstream/ (gitignored)
+```
+
+[`cfg_bridge.py`](src/rl_bench/cfg_bridge.py) maps this repo’s flat YAML configs to upstream OmegaConf (your hyperparameters, not the paper’s default Hydra overrides). [`upstream_path.py`](src/rl_bench/upstream_path.py) adds the clone to `sys.path` at import time.
+
+Legacy in-repo [`ensemble.py`](src/rl_bench/ensemble.py) / [`sac.py`](src/rl_bench/sac.py) remain for unit tests only; trainers do not use them.
+
 ## Layout
 
 ```
 rl-bench/
-├─ configs/         # one YAML per algorithm
+├─ configs/              # YAML per algorithm × env
+│   ├─ *_hopper.yaml     # Hopper-v4, 500k steps (sac/mbpo/macura defaults)
+│   └─ *_halfcheetah.yaml
+├─ scripts/
+│   ├─ sync_macura_upstream.sh
+│   ├─ train_*.sh
+│   └─ plot_runs.py
 ├─ src/rl_bench/
-│   ├─ envs.py      # gym wrapper + running obs normalizer
-│   ├─ buffer.py    # replay buffer (env + model)
-│   ├─ nets.py      # MLP, GaussianTanhPolicy, QNet, ProbEnsembleMember
-│   ├─ ensemble.py  # probabilistic ensemble + GJS divergence
-│   ├─ exploration.py  # stochastic / white / pink noise
-│   ├─ sac.py       # SAC agent
-│   ├─ train_sac.py
-│   ├─ train_mbpo.py
-│   ├─ train_macura.py
-│   ├─ eval.py
-│   ├─ live_plot.py # interactive learning-curve window
-│   ├─ logger.py    # TB + jsonl + csv
-│   └─ utils.py
-├─ scripts/         # bash launchers + plot_runs.py
+│   ├─ cfg_bridge.py, upstream_*.py
+│   ├─ envs.py, buffer.py, exploration.py, eval.py, logger.py, video.py
+│   ├─ train_sac.py, train_mbpo.py, train_macura.py
+│   └─ ensemble.py, sac.py   # legacy; tests only
+├─ vendor/macura-upstream/  # after sync; gitignored
 ├─ tests/
-├─ runs/            # per-seed artifacts (gitignored)
-└─ results/         # aggregated plots (gitignored)
+├─ runs/                 # per-seed checkpoints/logs (gitignored)
+└─ results/              # aggregated summaries / plots
 ```
 
 ## Reproduce
@@ -48,9 +57,16 @@ rl-bench/
 ```bash
 git clone <repo-url> rl-bench && cd rl-bench
 uv sync
+bash scripts/sync_macura_upstream.sh
 ```
 
-Single seed:
+Set `device: auto` (or `cuda`) in the YAML you use. Check GPU:
+
+```bash
+uv run python -c "import torch; print(torch.cuda.is_available())"
+```
+
+### Hopper (default)
 
 ```bash
 uv run python -m rl_bench.train_sac    --config configs/sac.yaml    --seed 0
@@ -58,17 +74,21 @@ uv run python -m rl_bench.train_mbpo   --config configs/mbpo.yaml   --seed 0
 uv run python -m rl_bench.train_macura --config configs/macura.yaml --seed 0
 ```
 
-Multi-seed (`0 1 2` by default):
+### HalfCheetah
 
 ```bash
-bash scripts/train_sac.sh
-bash scripts/train_mbpo.sh
-bash scripts/train_macura.sh
+uv run python -m rl_bench.train_sac    --config configs/sac_halfcheetah.yaml    --seed 0
+uv run python -m rl_bench.train_mbpo   --config configs/mbpo_halfcheetah.yaml   --seed 0
+uv run python -m rl_bench.train_macura --config configs/macura_halfcheetah.yaml --seed 0
 ```
 
-Default configs now target `Hopper-v4` (MuJoCo). Runs are headless by default (`env.render: false`, `train.live_plot: false`). Enable rendering/live curves in YAML only when needed.
+Multi-seed (`0 1 2` by default): `bash scripts/train_sac.sh` (and mbpo/macura).
 
-Aggregate seeds into one figure:
+Runs are headless by default (`env.render: false`, `train.live_plot: false`). Optional MP4 rollouts: `train.video_every` in YAML; saved under `runs/.../videos/` via [`video.py`](src/rl_bench/video.py) from `sac.pth`.
+
+Change `paths.run_dir` in YAML if you need a new experiment folder and must not overwrite an existing `runs/*_seed0/`.
+
+Aggregate learning curves:
 
 ```bash
 uv run python scripts/plot_runs.py --algos sac mbpo macura --out results/learning_curves.png
@@ -83,6 +103,6 @@ uv run tensorboard --logdir runs/
 ## Tests
 
 ```bash
-uv run pytest                 # unit tests
-uv run pytest -m slow         # also the 2k-step SAC smoke on Pendulum-v1
+uv run pytest
+uv run pytest -m slow    # 2k-step SAC on Pendulum-v1
 ```
