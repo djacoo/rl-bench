@@ -40,7 +40,7 @@ rl-bench/
 │   └─ plot_runs.py
 ├─ src/rl_bench/
 │   ├─ cfg_bridge.py, upstream_*.py
-│   ├─ envs.py, buffer.py, exploration.py, eval.py, logger.py, video.py
+│   ├─ envs.py, exploration.py, eval.py, logger.py, video.py
 │   └─ train_sac.py, train_mbpo.py, train_macura.py
 ├─ vendor/macura-upstream/  # after sync; gitignored
 ├─ runs/                 # per-seed checkpoints/logs (gitignored)
@@ -79,7 +79,7 @@ uv run python -m rl_bench.train_macura --config configs/macura_halfcheetah.yaml 
 
 Multi-seed (`0 1 2` by default): `bash scripts/train_sac.sh` (and mbpo/macura).
 
-Runs are headless by default (`env.render: false`, `train.live_plot: false`). Optional MP4 rollouts: `train.video_every` in YAML; saved under `runs/.../videos/` via [`video.py`](src/rl_bench/video.py) from `sac.pth`.
+Runs are headless by default (`env.render: false`). Optional MP4 rollouts: `train.video_every` in YAML; saved under `runs/.../videos/` via [`video.py`](src/rl_bench/video.py) from `sac.pth`.
 
 Change `paths.run_dir` in YAML if you need a new experiment folder and must not overwrite an existing `runs/*_seed0/`.
 
