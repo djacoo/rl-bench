@@ -8,6 +8,7 @@ from tqdm import tqdm
 from .buffer import ReplayBuffer
 from .envs import make_env
 from .eval import evaluate
+from .video import record_policy_video, should_record_video
 from .exploration import make_noise
 from .live_plot import LivePlot
 from .logger import Logger
@@ -79,6 +80,9 @@ def main():
     log_every = train_cfg["log_every"]
     eval_every = train_cfg["eval_every"]
     ckpt_every = train_cfg["ckpt_every"]
+    video_every = train_cfg.get("video_every")
+    video_episodes = int(train_cfg.get("video_episodes", 1))
+    video_dir = run_dir / "videos"
     n_eval = train_cfg["eval_episodes"]
     live = bool(train_cfg.get("live_plot", True))
     lp = LivePlot(title=f"sac seed={seed}") if live else None
@@ -139,6 +143,16 @@ def main():
                 lp.add_eval(step1, float(np.mean(rets)))
         if step1 % ckpt_every == 0:
             agent.save(run_dir / f"ckpt_{step1}.pt")
+        if should_record_video(step1, total, video_every):
+            path = record_policy_video(
+                agent,
+                env_cfg,
+                video_dir,
+                step1,
+                shared_rms=shared_rms,
+                n_episodes=video_episodes,
+            )
+            tqdm.write(f"saved video: {path}")
 
     pbar.close()
     if lp is not None:

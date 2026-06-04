@@ -44,6 +44,8 @@ train:
   eval_every: 10_000
   eval_episodes: 30
   live_plot: false
+  video_every: 100_000      # mp4 every N env steps (+ final step if not divisible)
+  video_episodes: 1        # episodes rolled into each mp4
 
 paths:
   run_dir: "runs/mbpo_seed{seed}"

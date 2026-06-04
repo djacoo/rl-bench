@@ -1,0 +1,51 @@
+algo: mbpo
+seed: 0
+device: auto
+
+env:
+  env_id: "HalfCheetah-v5"
+  max_episode_steps: 1000
+  obs_norm: true
+  eval_seed: 10000
+  render: false
+
+sac:
+  gamma: 0.99
+  tau: 0.005
+  lr_actor: 3.0e-4
+  lr_critic: 3.0e-4
+  lr_alpha: 3.0e-4
+  batch_size: 128
+  replay_capacity: 1_000_000
+  warmup_steps: 5_000
+  hidden: [256, 256]
+
+model:
+  n_members: 7
+  n_elites: 5
+  hidden: [200, 200, 200, 200]
+  refit_every: 250
+  max_refit_samples: 40_000
+  holdout_frac: 0.2
+  rollout_M: 400
+  rollout_horizon: 1
+  real_ratio: 0.10
+  model_buf_capacity: 400_000
+  updates_G: 8
+
+exploration:
+  kind: pink
+  scale: 0.05
+
+train:
+  total_env_steps: 300_000
+  log_every: 1_000
+  ckpt_every: 25_000
+  eval_every: 10_000
+  eval_episodes: 10
+  live_plot: false
+  video_every: 100_000
+  video_episodes: 1
+
+paths:
+  run_dir: "runs/mbpo_halfcheetah_seed{seed}"

@@ -18,6 +18,7 @@ dependencies = [
     "colorednoise>=2.2",
     "matplotlib>=3.8",
     "pandas>=2.2",
+    "imageio[ffmpeg]>=2.34",
 ]
 
 [dependency-groups]
