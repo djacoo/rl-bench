@@ -1,6 +1,6 @@
 algo: sac
 seed: 0
-device: cpu
+device: auto
 
 env:
   env_id: "Hopper-v4"
