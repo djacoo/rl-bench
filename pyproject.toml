@@ -1,6 +1,6 @@
 [project]
 name = "rl-bench"
-version = "0.0.1"
+version = "0.1.0"
 description = "Academic implementations of SAC, MBPO, and MACURA on Gymnasium MuJoCo continuous-control environments (Hopper-v4 first)."
 readme = "README.md"
 requires-python = "==3.11.*"
