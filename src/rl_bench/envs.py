@@ -42,6 +42,25 @@ class ObsNormalizer(gym.ObservationWrapper):
         return self.rms.normalize(arr).astype(np.float32)
 
 
+def make_sac_envs(yaml_cfg, seed):
+    """Train + eval envs for the custom SAC loop (shared obs-norm stats)."""
+    c = yaml_cfg["env"]
+    train = make_env(
+        c["env_id"], seed=seed,
+        max_episode_steps=c.get("max_episode_steps"),
+        obs_norm=c.get("obs_norm", True),
+        render_mode="human" if c.get("render", False) else None,
+    )
+    shared_rms = getattr(train, "rms", None)
+    eval_env = make_env(
+        c["env_id"], seed=c["eval_seed"], eval=True,
+        max_episode_steps=c.get("max_episode_steps"),
+        obs_norm=c.get("obs_norm", True),
+        shared_rms=shared_rms,
+    )
+    return train, eval_env, shared_rms
+
+
 def make_env(env_id, seed, eval=False, max_episode_steps=None, obs_norm=True, shared_rms=None, render_mode=None):
     kwargs = {}
     if max_episode_steps is not None:

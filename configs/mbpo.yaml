@@ -3,34 +3,28 @@ seed: 0
 device: auto
 
 env:
-  env_id: "LunarLanderContinuous-v3"
+  env_id: "Hopper-v4"
   max_episode_steps: 1000
-  obs_norm: true
+  obs_norm: false
   eval_seed: 10000
-  render: true            # pygame window of train env; set false for headless / faster runs
+  render: false           # render train env window; keep false for headless / faster runs
 
 sac:
   gamma: 0.99
   tau: 0.005
   lr_actor: 3.0e-4
-  lr_critic: 3.0e-4
-  lr_alpha: 3.0e-4
-  batch_size: 256
+  batch_size: 128
   replay_capacity: 200_000
-  warmup_steps: 5_000
+  warmup_steps: 10_000
   hidden: [256, 256]
 
 model:
   n_members: 7
-  n_elites: 5
   hidden: [200, 200, 200, 200]
   refit_every: 250            # env steps between ensemble refits
-  max_refit_samples: 40_000   # cap on training samples per refit
   holdout_frac: 0.2
   rollout_M: 400              # branched rollouts per refit cycle
-  rollout_horizon: 1          # fixed horizon (MBPO classic)
   real_ratio: 0.10            # fraction of SAC batch drawn from D_env
-  model_buf_capacity: 50_000
   updates_G: 8                # SAC updates per env step
 
 exploration:
@@ -38,12 +32,12 @@ exploration:
   scale: 0.05
 
 train:
-  total_env_steps: 200_000
+  total_env_steps: 500_000
   log_every: 1_000
-  ckpt_every: 25_000
   eval_every: 10_000
   eval_episodes: 30
-  live_plot: true
+  video_every: 100_000      # mp4 every N env steps (+ final step if not divisible)
+  video_episodes: 1        # episodes rolled into each mp4
 
 paths:
   run_dir: "runs/mbpo_seed{seed}"

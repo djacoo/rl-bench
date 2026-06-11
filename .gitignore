@@ -15,9 +15,22 @@ __pycache__/
 .idea/
 .vscode/
 
-# Run artifacts
+# Reference clone of paper repo (see scripts/sync_macura_upstream.sh)
+vendor/macura-upstream/
+
+# Local training output (large artifacts stay untracked)
 runs/
-results/
+old_runs/
+
+# Ad-hoc local plots (not part of committed experiment bundles)
+results/*.png
+
+# Committed experiment summaries (no videos/checkpoints/tensorboard)
+results/**/videos/
+results/**/*.mp4
+results/**/*.pt
+results/**/tb/
+results/**/*.log
 
 # Local docs (specs and plans are working artifacts, not source-of-truth)
 docs/specs/
